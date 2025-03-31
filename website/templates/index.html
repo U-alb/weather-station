@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Environmental Data Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.4.1/socket.io.js"></script>
+</head>
+<body>
+    <h1>Environmental Data Dashboard</h1>
+    <canvas id="temperatureChart" width="400" height="200"></canvas>
+    <canvas id="pressureChart" width="400" height="200"></canvas>
+
+    <script>
+        const socket = io();
+
+        socket.on('connected', function(data) {
+            console.log(data.data);
+        });
+
+        const temperatureData = {
+            labels: [],
+            datasets: [{
+                label: 'Temperature (°C)',
+                backgroundColor: 'rgb(255, 99, 132)',
+                borderColor: 'rgb(255, 99, 132)',
+                data: []
+            }]
+        };
+
+        const pressureData = {
+            labels: [],
+            datasets: [{
+                label: 'Pressure (kPa)',
+                backgroundColor: 'rgb(54, 162, 235)',
+                borderColor: 'rgb(54, 162, 235)',
+                data: []
+            }]
+        };
+
+        const temperatureConfig = {
+            type: 'line',
+            data: temperatureData,
+            options: {}
+        };
+
+        const pressureConfig = {
+            type: 'line',
+            data: pressureData,
+            options: {}
+        };
+
+        const temperatureChart = new Chart(
+            document.getElementById('temperatureChart'),
+            temperatureConfig
+        );
+
+        const pressureChart = new Chart(
+            document.getElementById('pressureChart'),
+            pressureConfig
+        );
+
+        socket.on('new_data', function(data) {
+            const now = new Date().toLocaleTimeString();
+            temperatureData.labels.push(now);
+            pressureData.labels.push(now);
+            temperatureData.datasets[0].data.push(data.temperature);
+            pressureData.datasets[0].data.push(data.pressure);
+
+            if (temperatureData.labels.length > 20) {
+                temperatureData.labels.shift();
+                temperatureData.datasets[0].data.shift();
+                pressureData.labels.shift();
+                pressureData.datasets[0].data.shift();
+            }
+
+            temperatureChart.update();
+            pressureChart.update();
+        });
+    </script>
+</body>
+</html>
